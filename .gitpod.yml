@@ -25,3 +25,4 @@ github:
 vscode:
   extensions:
     - https://github.com/Blackhole1123/CarbonVSCode/raw/master/carbon-0.0.1.vsix
+    - https://github.com/kortina/run-in-terminal/releases/download/v0.0.5/run-in-terminal-0.0.5.vsix
