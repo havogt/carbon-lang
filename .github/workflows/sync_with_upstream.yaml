@@ -1,0 +1,18 @@
+name: Rebase Upstream
+on:
+  schedule:
+    - cron: "0 0 * * 0" # run once a week
+  workflow_dispatch: # run manually
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 10 # greater than the number of commits you made
+          token: ${{ secrets.ACCESS_TOKEN }}
+      - uses: havogt/rebase-upstream-action@master
+        with:
+          branch: trunk
+          github_token: ${{ secrets.ACCESS_TOKEN }}
