@@ -21,3 +21,7 @@ github:
     addComment: false
     # add a "Review in Gitpod" button to the pull request's description (defaults to false)
     addBadge: false
+
+vscode:
+  extensions:
+    - https://github.com/Blackhole1123/CarbonVSCode/raw/master/carbon-0.0.1.vsix
