@@ -10,6 +10,8 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+// #include "explorer/common/source_location.h" // TODO keep loc as ints not as
+// string
 #include "llvm/ADT/Twine.h"
 
 namespace Carbon {

@@ -16,10 +16,21 @@ namespace Carbon {
 class SourceLocation {
  public:
   // The filename should be eternal or arena-allocated to eliminate copies.
-  constexpr SourceLocation(const char* filename, int line_num)
-      : filename_(filename), line_num_(line_num) {}
-  SourceLocation(Nonnull<const std::string*> filename, int line_num)
-      : filename_(filename->c_str()), line_num_(line_num) {}
+  constexpr SourceLocation(const char* filename, int line_num,
+                           int col_begin = -1, int line_num_end = -1,
+                           int col_end = -1)
+      : filename_(filename),
+        line_num_(line_num),
+        col_begin_(col_begin),
+        line_num_end_(line_num_end),
+        col_end_(col_end) {}
+  SourceLocation(Nonnull<const std::string*> filename, int line_num,
+                 int col_begin = -1, int line_num_end = -1, int col_end = -1)
+      : filename_(filename->c_str()),
+        line_num_(line_num),
+        col_begin_(col_begin),
+        line_num_end_(line_num_end),
+        col_end_(col_end) {}
 
   SourceLocation(const SourceLocation&) = default;
   SourceLocation(SourceLocation&&) = default;
@@ -31,7 +42,8 @@ class SourceLocation {
   }
 
   void Print(llvm::raw_ostream& out) const {
-    out << filename_ << ":" << line_num_;
+    out << filename_ << ":" << line_num_ << ":" << col_begin_ << "-"
+        << line_num_end_ << ":" << col_end_;
   }
   auto ToString() const -> std::string {
     std::string result;
@@ -44,6 +56,9 @@ class SourceLocation {
  private:
   std::string_view filename_;
   int line_num_;
+  int col_begin_;
+  int line_num_end_;
+  int col_end_;
 };
 
 }  // namespace Carbon
