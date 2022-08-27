@@ -4,6 +4,16 @@
 
 package(default_visibility = ["//visibility:public"])
 
+# load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
+
+# cmake(
+#     name = "lscpp",
+#     cache_entries = {
+#     },
+#     lib_source = "@lscpp//:lscpp",
+#     out_static_libs = ["lscpp.a"],
+# )
+
 cc_library(
     name = "carbonlslib",
     srcs = ["carbonls.cpp"],
@@ -11,6 +21,7 @@ cc_library(
     deps = [
         "//explorer/syntax:syntax",
         "//explorer/common:arena",
+        "@lscpp//:lscpp",
         "@llvm-project//llvm:Support",
     ],
 )

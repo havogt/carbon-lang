@@ -6,6 +6,7 @@
 #include "explorer/ast/ast.h"
 #include "explorer/common/arena.h"
 #include "explorer/syntax/parse.h"
+#include "lscpp/lsp_server.h"
 
 void parse(std::string filename) {
   using namespace Carbon;
