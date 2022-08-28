@@ -13,6 +13,7 @@ cc_library(
         "src/*.cpp",
         "src/**/*.h",
         "external/**/*.hpp",
+        "external/**/*.cpp",
     ]),
     strip_include_prefix = "include",
     copts = [

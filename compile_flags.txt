@@ -98,6 +98,8 @@ bazel-bin/external/com_google_googletest/googletest
 bazel-execroot/external/com_google_googletest/googletest/include
 -isystem
 bazel-bin/external/com_google_googletest/googletest/include
+-isystem
+bazel-execroot/external/lscpp/include
 -std=c++17
 -stdlib=libc++
 -no-canonical-prefixes
