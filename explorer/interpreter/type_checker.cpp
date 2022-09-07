@@ -627,6 +627,14 @@ auto TypeChecker::ArgumentDeduction(
     BindingMap& deduced, Nonnull<const Value*> param, Nonnull<const Value*> arg,
     bool allow_implicit_conversion, const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
+  // llvm::outs() << "deducing";
+  llvm::outs() << "deducing " << *param << " from " << *arg << "\n";
+  llvm::outs() << "bindings: ";
+  llvm::ListSeparator sep;
+  for (auto binding : bindings_to_deduce) {
+    llvm::outs() << sep << *binding;
+  }
+  llvm::outs() << "\n";
   if (trace_stream_) {
     **trace_stream_ << "deducing " << *param << " from " << *arg << "\n";
     **trace_stream_ << "bindings: ";
@@ -2606,10 +2614,27 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> size_value,
           InterpExp(&array_literal.size_expression(), arena_, trace_stream_));
-      if (cast<IntValue>(size_value)->value() < 0) {
+
+      // if (size_value->kind() == Value::Kind::IntValue) {
+      // return CompilationError(array_literal.size_expression().source_loc())
+      //        << "kind: " << static_cast<int>(size_value->kind());
+      if (size_value->kind() == Value::Kind::VariableType) {
+        // auto val =
+        // cast<VariableType>(size_value)->binding().constant_value(); if
+        // (cast<IntValue>(*val)->value() < 0) {
+        //   return
+        //   CompilationError(array_literal.size_expression().source_loc())
+        //          << "Array size cannot be negative";
+        // }
+
+        // // return
+        // CompilationError(array_literal.size_expression().source_loc())
+        // //        << "kind: " << static_cast<int>(size_value->kind());
+      } else if (cast<IntValue>(size_value)->value() < 0) {
         return CompilationError(array_literal.size_expression().source_loc())
                << "Array size cannot be negative";
       }
+      // }
       array_literal.set_static_type(arena_->New<TypeType>());
       array_literal.set_value_category(ValueCategory::Let);
       return Success();

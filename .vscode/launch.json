@@ -1,0 +1,17 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug explorer",
+            "type": "gdb",
+            "request": "launch",
+            "target": "bazel-bin/explorer/explorer",
+            "arguments": "${GITPOD_REPO_ROOT}/explorer/testdata/generic_function/deduce_array_size.carbon",
+            "cwd": "${workspaceRoot}",
+            "valuesFormatting": "disabled"
+        }
+    ]
+}
