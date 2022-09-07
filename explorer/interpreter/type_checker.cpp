@@ -627,14 +627,6 @@ auto TypeChecker::ArgumentDeduction(
     BindingMap& deduced, Nonnull<const Value*> param, Nonnull<const Value*> arg,
     bool allow_implicit_conversion, const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
-  // llvm::outs() << "deducing";
-  llvm::outs() << "deducing " << *param << " from " << *arg << "\n";
-  llvm::outs() << "bindings: ";
-  llvm::ListSeparator sep;
-  for (auto binding : bindings_to_deduce) {
-    llvm::outs() << sep << *binding;
-  }
-  llvm::outs() << "\n";
   if (trace_stream_) {
     **trace_stream_ << "deducing " << *param << " from " << *arg << "\n";
     **trace_stream_ << "bindings: ";
