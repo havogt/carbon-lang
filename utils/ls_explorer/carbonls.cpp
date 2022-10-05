@@ -11,69 +11,59 @@
 
 namespace Carbon::LS {
 
-std::optional<AST> parse(Arena& arena, std::string content) {
-  auto error_or_ast = ParseFromString(&arena, "<filename>", content, false);
-  if (error_or_ast.ok()) {
-    return *error_or_ast;
-  } else {
-    return {};
-  }
+auto parse(Arena& arena, std::string content) {
+  return ParseFromString(&arena, "<filename>", content, false);
 }
 
-auto CarbonLS::initialize(const lscpp::protocol::InitializeParams& /*params*/)
-    -> lscpp::protocol::InitializeResult {
-  lscpp::protocol::ServerCapabilities capabilites;
-  capabilites.hoverProvider = true;
-  // capabilites.completionProvider = lscpp::protocol::CompletionOptions{};
-  capabilites.definitionProvider = true;
-  lscpp::protocol::TextDocumentSyncOptions sync;
-  sync.openClose = true;
-  sync.change = lscpp::protocol::TextDocumentSyncKind::Full;
-  sync.save = {false};
-  capabilites.textDocumentSync = sync;
-  lscpp::protocol::InitializeResult result{capabilites};
+auto parse_error_location(std::string const& loc) -> lscpp::protocol::Range {
+  // close your eyes
+  auto split_fname = loc.find(':');
+  auto pos = loc.substr(split_fname + 1);
+  auto split = pos.find('-');
+  auto start = pos.substr(0, split);
+  std::cerr << start << std::endl;
+  auto end = pos.substr(split + 1);
+  std::cerr << end << std::endl;
+  auto split_s = start.find(':');
+  auto s = lscpp::protocol::Position{std::stoi(start.substr(0, split_s)) - 1,
+                                     std::stoi(start.substr(split_s + 1)) - 1};
+  auto split_e = end.find(':');
+  auto e = lscpp::protocol::Position{std::stoi(end.substr(0, split_e)) - 1,
+                                     std::stoi(end.substr(split_e + 1)) - 1};
 
-  return result;
+  return {s, e};
 }
 
-auto CarbonLS::getTextDocumentService() -> lscpp::TextDocumentService& {
-  return *this;
-}
-
-auto CarbonLS::hover(lscpp::protocol::TextDocumentPositionParams position)
+auto lscpp_handle_hover(CarbonLS& server,
+                        lscpp::protocol::TextDocumentPositionParams position)
     -> lscpp::protocol::Hover {
-  if (auto& ast = open_files_[position.textDocument.uri]) {
+  auto& ast = server.open_files_.at(position.textDocument.uri);
+  if (ast.ok()) {
     return {"all good!", {}};
   } else {
-    return {"error!", {}};
+    return {ast.error().message() + " at " + ast.error().location(),
+            parse_error_location(ast.error().location())};
   }
 }
 
-auto CarbonLS::definition(
-    lscpp::protocol::TextDocumentPositionParams /*position*/)
-    -> lscpp::protocol::Location {
-  return {};
+void lscpp_handle_did_open(CarbonLS& server,
+                           lscpp::protocol::DidOpenTextDocumentParams params) {
+  server.open_files_.emplace(std::pair(
+      params.textDocument.uri, parse(server.arena_, params.textDocument.text)));
+}
+void lscpp_handle_did_change(
+    CarbonLS& server, lscpp::protocol::DidChangeTextDocumentParams params) {
+  server.open_files_.erase(params.textDocument.uri);
+  server.open_files_.emplace(
+      std::pair(params.textDocument.uri,
+                parse(server.arena_, params.contentChanges[0].text)));
+}
+void lscpp_handle_did_close(
+    CarbonLS& server, lscpp::protocol::DidCloseTextDocumentParams params) {
+  server.open_files_.erase(params.textDocument.uri);
 }
 
-auto CarbonLS::completion(lscpp::protocol::CompletionParams /*params*/)
-    -> std::variant<std::vector<lscpp::protocol::CompletionItem>> {
-  std::vector<lscpp::protocol::CompletionItem> result;
-  return result;
-}
-
-void CarbonLS::didOpen(lscpp::protocol::DidOpenTextDocumentParams params) {
-  open_files_.emplace(std::pair(params.textDocument.uri,
-                                parse(arena_, params.textDocument.text)));
-}
-void CarbonLS::didChange(lscpp::protocol::DidChangeTextDocumentParams params) {
-  open_files_.erase(params.textDocument.uri);
-  open_files_.emplace(std::pair(params.textDocument.uri,
-                                parse(arena_, params.contentChanges[0].text)));
-}
-void CarbonLS::didClose(lscpp::protocol::DidCloseTextDocumentParams params) {
-  open_files_.erase(params.textDocument.uri);
-}
-
-void CarbonLS::didSave(lscpp::protocol::DidSaveTextDocumentParams /*params*/) {}
-
+void lscpp_handle_did_save(
+    CarbonLS& /* unused */,
+    lscpp::protocol::DidSaveTextDocumentParams /*unused*/){};
 }  // namespace Carbon::LS

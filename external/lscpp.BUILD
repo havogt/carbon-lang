@@ -11,6 +11,7 @@ cc_library(
         ]),
     srcs = glob([
         "src/*.cpp",
+        "src/experimental/*.cpp",
         "src/**/*.h",
         "external/**/*.hpp",
         "external/**/*.cpp",
@@ -18,6 +19,7 @@ cc_library(
     strip_include_prefix = "include",
     copts = [
                 "-Iexternal/lscpp/external/loguru",
+                "-Iexternal/lscpp/external", #TODO fix
                 "-Wno-missing-field-initializers",
                 "-Wno-unused-const-variable",
             ],
