@@ -11,9 +11,6 @@
 
 namespace Carbon::LS {
 struct CarbonLS : lscpp::experimental::server_with_default_handler {
-  friend void lscpp_handle_did_save(
-      CarbonLS& /* unused */,
-      lscpp::protocol::DidSaveTextDocumentParams /*unused*/);
   friend void lscpp_handle_did_open(
       CarbonLS& server, lscpp::protocol::DidOpenTextDocumentParams params);
   friend void lscpp_handle_did_change(

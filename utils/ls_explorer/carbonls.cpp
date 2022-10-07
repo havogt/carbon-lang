@@ -63,7 +63,4 @@ void lscpp_handle_did_close(
   server.open_files_.erase(params.textDocument.uri);
 }
 
-void lscpp_handle_did_save(
-    CarbonLS& /* unused */,
-    lscpp::protocol::DidSaveTextDocumentParams /*unused*/){};
 }  // namespace Carbon::LS
