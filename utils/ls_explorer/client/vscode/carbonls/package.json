@@ -1,0 +1,58 @@
+{
+  "name": "carbonls",
+  "displayName": "carbonls",
+  "description": "Language Server for Carbon",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:carbon"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "carbon",
+        "aliases": [
+          "Carbon",
+          "carbon"
+        ],
+        "extensions": [
+          ".carbon"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "carbon",
+        "scopeName": "source.carbon",
+        "path": "./syntaxes/carbon.tmLanguage"
+      }
+    ],
+    "commands": [
+      {
+        "command": "carbonls.restart",
+        "title": "CarbonLS: Restart Language Server",
+        "description": "Restart the running instance of the language server"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.7",
+    "@types/vscode": "^1.63.0",
+    "@vscode/test-electron": "^2.1.2"
+  }
+}

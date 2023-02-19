@@ -273,3 +273,14 @@ local_repository(
     name = "woff2_carbon",
     path = "third_party/examples/woff2/carbon",
 )
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
+
+new_git_repository(
+    name = "lscpp",
+    build_file = "lscpp.BUILD",
+    strip_prefix = "lscpp",
+    remote = "https://github.com/havogt/cmakels",
+    branch = "devel",
+    # sha256 = "d4a0f4bc56e2620989516cf191ff06e6ab0c1ec1277a81b0c07a8b7deb51fb29",
+)
