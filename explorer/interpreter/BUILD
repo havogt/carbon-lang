@@ -15,17 +15,23 @@ cc_library(
     hdrs = [
         "action.h",
         "value.h",
+        "value_transform.h",
     ],
+    textual_hdrs = [
+        "value_kinds.def",
+    ],
+    # Exposed to resolve `member_test` dependencies.
+    visibility = ["//explorer/ast:__pkg__"],
     deps = [
         ":address",
         ":dictionary",
-        ":field_path",
+        ":element_path",
         ":heap_allocation_interface",
         ":stack",
         "//common:check",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
-        "//explorer/ast:bindings",
         "//explorer/common:arena",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
@@ -51,7 +57,7 @@ cc_library(
     name = "address",
     hdrs = ["address.h"],
     deps = [
-        ":field_path",
+        ":element_path",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
@@ -86,8 +92,8 @@ cc_library(
 )
 
 cc_library(
-    name = "field_path",
-    hdrs = ["field_path.h"],
+    name = "element_path",
+    hdrs = ["element_path.h"],
     deps = [
         "//common:ostream",
         "//explorer/ast",
@@ -137,10 +143,12 @@ cc_library(
         ":heap",
         ":stack",
         "//common:check",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/common:arena",
         "//explorer/common:error_builders",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -194,16 +202,19 @@ cc_library(
         "@llvm-project//llvm:Support",
     ],
 )
+
 cc_library(
     name = "type_checker",
     srcs = [
         "builtins.cpp",
         "impl_scope.cpp",
+        "matching_impl_set.cpp",
         "type_checker.cpp",
     ],
     hdrs = [
         "builtins.h",
         "impl_scope.h",
+        "matching_impl_set.h",
         "type_checker.h",
     ],
     deps = [
@@ -211,6 +222,7 @@ cc_library(
         ":dictionary",
         ":interpreter",
         ":pattern_analysis",
+        "//common:check",
         "//common:error",
         "//common:ostream",
         "//explorer/ast",

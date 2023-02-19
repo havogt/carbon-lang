@@ -15,8 +15,13 @@ Declaration::~Declaration() = default;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
-    case DeclarationKind::InterfaceDeclaration: {
-      const auto& iface_decl = cast<InterfaceDeclaration>(*this);
+    case DeclarationKind::NamespaceDeclaration:
+      PrintID(out);
+      out << ";";
+      break;
+    case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration: {
+      const auto& iface_decl = cast<ConstraintTypeDeclaration>(*this);
       PrintID(out);
       out << " {\n";
       for (Nonnull<Declaration*> m : iface_decl.members()) {
@@ -30,6 +35,16 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       PrintID(out);
       out << " {\n";
       for (Nonnull<Declaration*> m : impl_decl.members()) {
+        out << *m;
+      }
+      out << "}\n";
+      break;
+    }
+    case DeclarationKind::MatchFirstDeclaration: {
+      const auto& match_first_decl = cast<MatchFirstDeclaration>(*this);
+      PrintID(out);
+      out << " {\n";
+      for (Nonnull<const ImplDeclaration*> m : match_first_decl.impls()) {
         out << *m;
       }
       out << "}\n";
@@ -91,10 +106,13 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       break;
     }
 
-    case DeclarationKind::AssociatedConstantDeclaration:
+    case DeclarationKind::InterfaceExtendsDeclaration:
+    case DeclarationKind::InterfaceImplDeclaration:
+    case DeclarationKind::AssociatedConstantDeclaration: {
       PrintID(out);
       out << ";\n";
       break;
+    }
 
     case DeclarationKind::SelfDeclaration: {
       out << "Self";
@@ -112,9 +130,17 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
 void Declaration::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      out << "namespace " << cast<NamespaceDeclaration>(*this).name();
+      break;
     case DeclarationKind::InterfaceDeclaration: {
       const auto& iface_decl = cast<InterfaceDeclaration>(*this);
       out << "interface " << iface_decl.name();
+      break;
+    }
+    case DeclarationKind::ConstraintDeclaration: {
+      const auto& constraint_decl = cast<ConstraintDeclaration>(*this);
+      out << "constraint " << constraint_decl.name();
       break;
     }
     case DeclarationKind::ImplDeclaration: {
@@ -130,11 +156,14 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
           << impl_decl.interface();
       break;
     }
+    case DeclarationKind::MatchFirstDeclaration:
+      out << "match_first";
+      break;
     case DeclarationKind::FunctionDeclaration:
       out << "fn " << cast<FunctionDeclaration>(*this).name();
       break;
     case DeclarationKind::DestructorDeclaration:
-      out << cast<DestructorDeclaration>(*this).name();
+      out << *GetName(*this);
       break;
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
@@ -165,6 +194,18 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       break;
     }
 
+    case DeclarationKind::InterfaceExtendsDeclaration: {
+      const auto& extends = cast<InterfaceExtendsDeclaration>(*this);
+      out << "extends " << *extends.base();
+      break;
+    }
+
+    case DeclarationKind::InterfaceImplDeclaration: {
+      const auto& impl = cast<InterfaceImplDeclaration>(*this);
+      out << "impl " << *impl.impl_type() << " as " << *impl.constraint();
+      break;
+    }
+
     case DeclarationKind::AssociatedConstantDeclaration: {
       const auto& let = cast<AssociatedConstantDeclaration>(*this);
       out << "let " << let.binding();
@@ -184,35 +225,48 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
   }
 }
 
+void DeclaredName::Print(llvm::raw_ostream& out) const {
+  for (const auto& [loc, name] : qualifiers()) {
+    out << name << ".";
+  }
+  out << inner_name();
+}
+
 auto GetName(const Declaration& declaration)
     -> std::optional<std::string_view> {
   switch (declaration.kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      return cast<NamespaceDeclaration>(declaration).name().inner_name();
     case DeclarationKind::FunctionDeclaration:
-      return cast<FunctionDeclaration>(declaration).name();
+      return cast<FunctionDeclaration>(declaration).name().inner_name();
     case DeclarationKind::DestructorDeclaration:
-      return cast<DestructorDeclaration>(declaration).name();
+      return "destructor";
     case DeclarationKind::ClassDeclaration:
-      return cast<ClassDeclaration>(declaration).name();
+      return cast<ClassDeclaration>(declaration).name().inner_name();
     case DeclarationKind::MixinDeclaration: {
-      return cast<MixinDeclaration>(declaration).name();
+      return cast<MixinDeclaration>(declaration).name().inner_name();
     }
     case DeclarationKind::MixDeclaration: {
       return std::nullopt;
     }
     case DeclarationKind::ChoiceDeclaration:
-      return cast<ChoiceDeclaration>(declaration).name();
+      return cast<ChoiceDeclaration>(declaration).name().inner_name();
     case DeclarationKind::InterfaceDeclaration:
-      return cast<InterfaceDeclaration>(declaration).name();
+    case DeclarationKind::ConstraintDeclaration:
+      return cast<ConstraintTypeDeclaration>(declaration).name().inner_name();
     case DeclarationKind::VariableDeclaration:
       return cast<VariableDeclaration>(declaration).binding().name();
     case DeclarationKind::AssociatedConstantDeclaration:
       return cast<AssociatedConstantDeclaration>(declaration).binding().name();
+    case DeclarationKind::InterfaceExtendsDeclaration:
+    case DeclarationKind::InterfaceImplDeclaration:
     case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::MatchFirstDeclaration:
       return std::nullopt;
     case DeclarationKind::SelfDeclaration:
-      return cast<SelfDeclaration>(declaration).name();
+      return SelfDeclaration::name();
     case DeclarationKind::AliasDeclaration: {
-      return cast<AliasDeclaration>(declaration).name();
+      return cast<AliasDeclaration>(declaration).name().inner_name();
     }
   }
 }
@@ -241,14 +295,14 @@ namespace {
 
 // The deduced parameters of a function declaration.
 struct DeducedParameters {
-  // The `me` parameter, if any.
-  std::optional<Nonnull<Pattern*>> me_pattern;
+  // The `self` parameter, if any.
+  std::optional<Nonnull<Pattern*>> self_pattern;
 
   // All other deduced parameters.
   std::vector<Nonnull<GenericBinding*>> resolved_params;
 };
 
-// Split the `me` pattern (if any) out of `deduced_params`.
+// Split the `self` pattern (if any) out of `deduced_params`.
 auto SplitDeducedParameters(
     SourceLocation source_loc,
     const std::vector<Nonnull<AstNode*>>& deduced_params)
@@ -261,36 +315,36 @@ auto SplitDeducedParameters(
         break;
       case AstNodeKind::BindingPattern: {
         Nonnull<BindingPattern*> binding = &cast<BindingPattern>(*param);
-        if (binding->name() != "me") {
-          return CompilationError(source_loc)
+        if (binding->name() != "self") {
+          return ProgramError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
-        if (result.me_pattern.has_value()) {
-          return CompilationError(source_loc)
-                 << "parameter list cannot contain more than one `me` "
+        if (result.self_pattern.has_value()) {
+          return ProgramError(source_loc)
+                 << "parameter list cannot contain more than one `self` "
                     "parameter";
         }
-        result.me_pattern = binding;
+        result.self_pattern = binding;
         break;
       }
       case AstNodeKind::AddrPattern: {
         Nonnull<AddrPattern*> addr_pattern = &cast<AddrPattern>(*param);
         Nonnull<BindingPattern*> binding =
             &cast<BindingPattern>(addr_pattern->binding());
-        if (binding->name() != "me") {
-          return CompilationError(source_loc)
+        if (binding->name() != "self") {
+          return ProgramError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
-        if (result.me_pattern.has_value()) {
-          return CompilationError(source_loc)
-                 << "parameter list cannot contain more than one `me` "
+        if (result.self_pattern.has_value()) {
+          return ProgramError(source_loc)
+                 << "parameter list cannot contain more than one `self` "
                     "parameter";
         }
-        result.me_pattern = addr_pattern;
+        result.self_pattern = addr_pattern;
         break;
       }
       default:
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "illegal AST node in implicit parameter list";
     }
   }
@@ -309,26 +363,30 @@ auto DestructorDeclaration::CreateDestructor(
                           SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<DestructorDeclaration>(
       source_loc, std::move(split_params.resolved_params),
-      split_params.me_pattern, param_pattern, return_term, body);
+      split_params.self_pattern, param_pattern, return_term, body);
 }
 
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
-                                 SourceLocation source_loc, std::string name,
+                                 SourceLocation source_loc, DeclaredName name,
                                  std::vector<Nonnull<AstNode*>> deduced_params,
                                  Nonnull<TuplePattern*> param_pattern,
                                  ReturnTerm return_term,
-                                 std::optional<Nonnull<Block*>> body)
+                                 std::optional<Nonnull<Block*>> body,
+                                 VirtualOverride virt_override)
     -> ErrorOr<Nonnull<FunctionDeclaration*>> {
   DeducedParameters split_params;
   CARBON_ASSIGN_OR_RETURN(split_params,
                           SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<FunctionDeclaration>(
-      source_loc, name, std::move(split_params.resolved_params),
-      split_params.me_pattern, param_pattern, return_term, body);
+      source_loc, std::move(name), std::move(split_params.resolved_params),
+      split_params.self_pattern, param_pattern, return_term, body,
+      virt_override);
 }
 
 void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
-  out << "fn " << name_ << " ";
+  auto name = GetName(*this);
+  CARBON_CHECK(name) << "Unexpected missing name for `" << *this << "`.";
+  out << "fn " << *name << " ";
   if (!deduced_parameters_.empty()) {
     out << "[";
     llvm::ListSeparator sep;
@@ -360,7 +418,7 @@ auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
         resolved_params.push_back(&cast<GenericBinding>(*param));
         break;
       default:
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "illegal AST node in implicit parameter list of impl";
     }
   }
@@ -371,11 +429,24 @@ auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
 }
 
 void AlternativeSignature::Print(llvm::raw_ostream& out) const {
-  out << "alt " << name() << " " << signature();
+  out << "alt " << name();
+  if (auto params = parameters()) {
+    out << **params;
+  }
 }
 
 void AlternativeSignature::PrintID(llvm::raw_ostream& out) const {
   out << name();
+}
+
+auto ChoiceDeclaration::FindAlternative(std::string_view name) const
+    -> std::optional<const AlternativeSignature*> {
+  for (auto* alt : alternatives()) {
+    if (alt->name() == name) {
+      return alt;
+    }
+  }
+  return std::nullopt;
 }
 
 }  // namespace Carbon

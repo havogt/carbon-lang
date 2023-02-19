@@ -33,9 +33,6 @@ class ActionStack {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // TODO: consider unifying with Print.
-  void PrintScopes(llvm::raw_ostream& out) const;
-
   // Starts execution with `action` at the top of the stack. Cannot be called
   // when IsEmpty() is false.
   void Start(std::unique_ptr<Action> action);
@@ -88,9 +85,9 @@ class ActionStack {
   auto Spawn(std::unique_ptr<Action> child) -> ErrorOr<Success>;
   auto Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
       -> ErrorOr<Success>;
-  // Replace the current action with another action of the same kind and run it
-  // next.
-  auto ReplaceWith(std::unique_ptr<Action> child) -> ErrorOr<Success>;
+  // Replace the current action with another action that produces the same kind
+  // of result and run it next.
+  auto ReplaceWith(std::unique_ptr<Action> replacement) -> ErrorOr<Success>;
 
   // Start a new recursive action.
   auto BeginRecursiveAction() {

@@ -64,7 +64,7 @@ auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
       compilation_unit.declarations().end(),
       [](const Fuzzing::Declaration& decl) {
         return decl.kind_case() == Fuzzing::Declaration::kFunction &&
-               decl.function().name() == "Main";
+               decl.function().name().name() == "Main";
       });
   return Carbon::ProtoToCarbon(compilation_unit) + (has_main ? "" : EmptyMain);
 }
@@ -83,6 +83,8 @@ auto ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit)
   CARBON_CHECK(prelude_path.ok()) << prelude_path.error();
 
   AddPrelude(*prelude_path, &arena, &ast.declarations);
+  CARBON_ASSIGN_OR_RETURN(
+      ast, AnalyzeProgram(&arena, ast, /*trace_stream=*/std::nullopt));
   return ExecProgram(&arena, ast, /*trace_stream=*/std::nullopt);
 }
 
