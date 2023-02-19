@@ -4,6 +4,7 @@ image:
 tasks:
   - init: |
       bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
+      bazel build //utils/ls_explorer:carbonls
 
 github:
   prebuilds:
@@ -26,3 +27,4 @@ vscode:
   extensions:
     - https://github.com/Blackhole1123/CarbonVSCode/raw/master/carbon-0.0.1.vsix
     - https://github.com/kortina/run-in-terminal/releases/download/v0.0.5/run-in-terminal-0.0.5.vsix
+    - file:///workspace/carbon-lang/utils/ls_explorer/client/carbonls-0.0.1.vsix
